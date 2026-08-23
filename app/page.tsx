@@ -1078,181 +1078,159 @@ const EquationInequalityTab = () => {
   );
 };
 // ==========================================
-// 【第4部】定積分と面積
+// 【第4部】定積分と面積（区分求積法・リーマン和）
 // ==========================================
 const IntegralAreaTab = () => {
-  const [mode, setMode] = useState<'single' | 'double'>('double');
-  const [a, setA] = useState<number>(-1);
-  const [b, setB] = useState<number>(2);
-
-  const [fP, setFP] = useState<number>(-1);
+  const [a, setA] = useState<number>(0);
+  const [b, setB] = useState<number>(3);
+  const [n, setN] = useState<number>(4);
+  const [fP, setFP] = useState<number>(0.5);
   const [fQ, setFQ] = useState<number>(0);
-  const [fR, setFR] = useState<number>(4);
+  const [fR, setFR] = useState<number>(1);
 
-  const [gP, setGP] = useState<number>(1);
-  const [gQ, setGQ] = useState<number>(-2);
-  const [gR, setGR] = useState<number>(0);
+  const f = (x: number) => fP * x * x + fQ * x + fR;
+  const F = (x: number) => (fP / 3) * Math.pow(x, 3) + (fQ / 2) * Math.pow(x, 2) + fR * x;
+  const fTex = formatPoly({ c: fP, p: 2 }, { c: fQ, p: 1 }, { c: fR, p: 0 });
 
-  const f = (x: number) => fP * x*x + fQ * x + fR;
-  const g = (x: number) => gP * x*x + gQ * x + gR;
+  const lo = Math.min(a, b);
+  const hi = Math.max(a, b);
+  const dx = n > 0 ? (hi - lo) / n : 0;
 
-  const fTex = formatPoly({c: fP, p: 2}, {c: fQ, p: 1}, {c: fR, p: 0});
-  const gTex = formatPoly({c: gP, p: 2}, {c: gQ, p: 1}, {c: gR, p: 0});
-  
-  const effGP = mode === 'single' ? 0 : gP;
-  const effGQ = mode === 'single' ? 0 : gQ;
-  const effGR = mode === 'single' ? 0 : gR;
-  const fgTex = formatPoly({c: fP - effGP, p: 2}, {c: fQ - effGQ, p: 1}, {c: fR - effGR, p: 0});
-
-  const { purpleArea, redArea, integralValue } = useMemo(() => {
-    let pArea = 0;
-    let rArea = 0;
-    const start = Math.min(a, b);
-    const end = Math.max(a, b);
-    
-    const hRoots = getRoots2(fP - effGP, fQ - effGQ, fR - effGR);
-    const pts = [start, ...hRoots.filter(r => r > start && r < end).sort((x,y)=>x-y), end];
-
-    const F_h = (x: number) => ((fP-effGP)/3)*Math.pow(x,3) + ((fQ-effGQ)/2)*Math.pow(x,2) + (fR-effGR)*x;
-
-    for(let i=0; i<pts.length-1; i++){
-      const v = F_h(pts[i+1]) - F_h(pts[i]); 
-      const contrib = (a <= b) ? v : -v; 
-      if(contrib >= 0) pArea += contrib;
-      else rArea += Math.abs(contrib);
+  const { riemannSum, exactIntegral, rectangles } = useMemo(() => {
+    const exact = F(hi) - F(lo);
+    let sum = 0;
+    const rects: { x0: number; x1: number; height: number }[] = [];
+    if (dx <= 0) return { riemannSum: 0, exactIntegral: exact, rectangles: rects };
+    for (let i = 0; i < n; i++) {
+      const x0 = lo + i * dx;
+      const x1 = x0 + dx;
+      const height = f(x0); // 左リーマン和
+      sum += height * dx;
+      rects.push({ x0, x1, height });
     }
-    return { purpleArea: pArea, redArea: rArea, integralValue: pArea - rArea };
-  }, [a, b, mode, fP, fQ, fR, gP, gQ, gR, effGP, effGQ, effGR]);
+    return { riemannSum: sum, exactIntegral: exact, rectangles: rects };
+  }, [a, b, n, fP, fQ, fR, lo, hi, dx]);
 
-  const shadeElements = useMemo(() => {
-    const elements = [];
-    const start = Math.min(a, b);
-    const end = Math.max(a, b);
-    const step = 0.02;
-    
-    for (let x = start; x <= end; x += step) {
-      const y1 = mode === 'single' ? 0 : g(x);
-      const y2 = f(x);
-      
-      let isPositiveContribution = y2 >= y1;
-      if (a > b) isPositiveContribution = !isPositiveContribution;
-
-      const strokeColor = isPositiveContribution ? "rgba(147, 51, 234, 0.4)" : "rgba(239, 68, 68, 0.4)";
-      
-      elements.push(
-        <line 
-          key={x.toFixed(3)} 
-          x1={CX + x*UNIT_X} 
-          y1={CY - y1*UNIT_Y} 
-          x2={CX + x*UNIT_X} 
-          y2={CY - y2*UNIT_Y} 
-          stroke={strokeColor} 
-          strokeWidth="1.5" 
-        />
-      );
-    }
-    return elements;
-  }, [a, b, mode, fP, fQ, fR, gP, gQ, gR]);
+  const error = Math.abs(riemannSum - exactIntegral);
 
   const fPath = useMemo(() => {
     let p = "";
-    for(let x=-10; x<=10; x+=0.1) {
-      const px = CX + x*UNIT_X; const py = CY - f(x)*UNIT_Y;
-      p += p==="" ? `M ${px} ${py} ` : `L ${px} ${py} `;
-    } return p;
+    for (let x = -10; x <= 10; x += 0.1) {
+      const px = CX + x * UNIT_X;
+      const py = CY - f(x) * UNIT_Y;
+      p += p === "" ? `M ${px} ${py} ` : `L ${px} ${py} `;
+    }
+    return p;
   }, [fP, fQ, fR]);
 
-  const gPath = useMemo(() => {
-    let p = "";
-    for(let x=-10; x<=10; x+=0.1) {
-      const px = CX + x*UNIT_X; const py = CY - g(x)*UNIT_Y;
-      p += p==="" ? `M ${px} ${py} ` : `L ${px} ${py} `;
-    } return p;
-  }, [gP, gQ, gR]);
+  const areaPath = useMemo(() => {
+    if (hi <= lo) return "";
+    let d = `M ${CX + lo * UNIT_X} ${CY}`;
+    for (let x = lo; x <= hi; x += 0.05) {
+      d += ` L ${CX + x * UNIT_X} ${CY - f(x) * UNIT_Y}`;
+    }
+    d += ` L ${CX + hi * UNIT_X} ${CY} Z`;
+    return d;
+  }, [lo, hi, fP, fQ, fR]);
 
   return (
     <SplitPane>
       <div className="space-y-4">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 space-y-5">
-          <div>
-            <h3 className="text-xs font-bold text-gray-500 mb-3">対象のグラフ設定</h3>
-            <div className="flex bg-gray-100 p-1.5 rounded-xl mb-4 gap-1">
-              <button onClick={() => setMode('single')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition shadow-sm ${mode === 'single' ? 'bg-white text-purple-700 border border-purple-100' : 'text-gray-500 hover:bg-gray-200/50'}`}>x軸との面積</button>
-              <button onClick={() => setMode('double')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition shadow-sm ${mode === 'double' ? 'bg-white text-purple-700 border border-purple-100' : 'text-gray-500 hover:bg-gray-200/50'}`}>2曲線間の面積</button>
+          <div className="bg-purple-50/70 p-4 rounded-xl border border-purple-100 text-center">
+            <p className="text-[10px] text-purple-700 font-bold mb-1">区分求積法（リーマン和）</p>
+            <div className="text-sm font-bold text-gray-800 overflow-x-auto min-h-[36px] flex items-center justify-center">
+              <InlineMath math={`f(x) = ${fTex}`} />
             </div>
-
-            <div className="space-y-2 bg-purple-50/70 p-4 rounded-xl border border-purple-100 mb-4 shadow-inner">
-              <div className="text-xs font-bold text-purple-800 bg-white inline-block px-2 py-1 rounded shadow-sm">
-                関数 <InlineMath math={`\\textcolor{#9333ea}{f(x)}=${fTex}`} />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <input type="number" step="0.1" value={fP} onChange={(e) => setFP(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-purple-400 focus:outline-none" placeholder="x²" title="x²の係数" />
-                <input type="number" step="0.1" value={fQ} onChange={(e) => setFQ(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-purple-400 focus:outline-none" placeholder="x" title="xの係数" />
-                <input type="number" step="0.1" value={fR} onChange={(e) => setFR(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-purple-400 focus:outline-none" placeholder="定数" title="定数項" />
-              </div>
-            </div>
-
-            {mode === 'double' && (
-              <div className="space-y-2 bg-blue-50/70 p-4 rounded-xl border border-blue-100 mb-4 shadow-inner">
-                <div className="text-xs font-bold text-blue-800 bg-white inline-block px-2 py-1 rounded shadow-sm">
-                  関数 <InlineMath math={`\\textcolor{#2563eb}{g(x)}=${gTex}`} />
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <input type="number" step="0.1" value={gP} onChange={(e) => setGP(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="x²" title="x²の係数" />
-                  <input type="number" step="0.1" value={gQ} onChange={(e) => setGQ(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="x" title="xの係数" />
-                  <input type="number" step="0.1" value={gR} onChange={(e) => setGR(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="定数" title="定数項" />
-                </div>
-              </div>
-            )}
+            <p className="text-xs text-gray-600 mt-2 leading-relaxed text-left">
+              区間 <InlineMath math="[a,\,b]" /> を <InlineMath math="n" /> 等分し、各小区間に短冊（長方形）を立てて足し合わせます。
+              <InlineMath math="n" /> を大きくする（細かく刻む）ほど、長方形の合計が曲線の下の面積（定積分）に近づきます。
+            </p>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-gray-100">
-            <SliderRow label="積分区間 下端 (a)" value={a} min={-4} max={4} step={0.1} onChange={setA} accentColor="accent-purple-500" textColor="text-purple-600" />
-            <SliderRow label="積分区間 上端 (b)" value={b} min={-4} max={4} step={0.1} onChange={setB} accentColor="accent-purple-500" textColor="text-purple-600" />
+          <div className="space-y-2 bg-purple-50/40 p-3 rounded-xl border border-purple-100">
+            <p className="text-[10px] font-bold text-purple-800">関数の係数</p>
+            <div className="flex gap-2">
+              <input type="number" step="0.1" value={fP} onChange={(e) => setFP(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-purple-400 focus:outline-none" title="x²の係数" />
+              <input type="number" step="0.1" value={fQ} onChange={(e) => setFQ(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-purple-400 focus:outline-none" title="xの係数" />
+              <input type="number" step="0.1" value={fR} onChange={(e) => setFR(Number(e.target.value))} className="w-1/3 p-2 border border-gray-300 rounded-md text-sm text-center text-gray-900 bg-white focus:ring-2 focus:ring-purple-400 focus:outline-none" title="定数項" />
+            </div>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-gray-200 text-center space-y-3 shadow-md mt-4">
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">定積分の計算過程</p>
-            
-            <div className="text-base text-gray-800 font-bold overflow-x-auto py-2 flex flex-col items-center gap-3">
-              {mode === 'double' && (
-                <BlockMath math={`\\int_{${getFractionTex(a)}}^{${getFractionTex(b)}} \\{ \\textcolor{#9333ea}{f(x)} - \\textcolor{#2563eb}{g(x)} \\} dx`} />
-              )}
-              <BlockMath math={`= \\int_{${getFractionTex(a)}}^{${getFractionTex(b)}} (${mode==='single' ? fTex : fgTex}) dx \\vphantom{\\frac{1}{2}}`} />
-            </div>
+          <div className="space-y-2 pt-1 border-t border-gray-100">
+            <SliderRow label="積分区間 下端 (a)" value={a} min={-3} max={4} step={0.1} onChange={setA} accentColor="accent-purple-500" textColor="text-purple-600" />
+            <SliderRow label="積分区間 上端 (b)" value={b} min={-3} max={5} step={0.1} onChange={setB} accentColor="accent-purple-500" textColor="text-purple-600" />
+            <SliderRow label="分割数 n" value={n} min={2} max={100} step={1} onChange={setN} accentColor="accent-violet-600" textColor="text-violet-700" />
+            <p className="text-[11px] text-gray-500">
+              小区間の幅 <InlineMath math={`\\Delta x = \\dfrac{b-a}{n} = ${dx.toFixed(4)}`} />（左端の高さで短冊を作る）
+            </p>
+          </div>
 
-            <div className="bg-gray-50 border border-gray-100 p-3 rounded-lg flex flex-col items-center gap-2">
-              <BlockMath math={`= \\textcolor{#9333ea}{(\\text{紫の面積})} - \\textcolor{#ef4444}{(\\text{赤の面積})} \\vphantom{\\frac{1}{2}}`} />
-              <BlockMath math={`= \\textcolor{#9333ea}{${getFractionTex(purpleArea)}} - \\textcolor{#ef4444}{${getFractionTex(redArea)}} \\vphantom{\\frac{1}{2}}`} />
+          <div className="bg-white p-5 rounded-xl border border-gray-200 space-y-4 shadow-md">
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold text-center">数値の比較</p>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="bg-violet-50 border border-violet-100 rounded-lg p-3">
+                <p className="text-xs text-gray-600 mb-1">長方形の面積の合計（リーマン和）</p>
+                <p className="text-2xl font-mono font-bold text-violet-700">{riemannSum.toFixed(4)}</p>
+                <div className="text-[11px] text-violet-800 mt-1 overflow-x-auto">
+                  <InlineMath math={`\\sum_{i=0}^{n-1} f(x_i)\\,\\Delta x`} />
+                </div>
+              </div>
+              <div className="bg-purple-50 border border-purple-100 rounded-lg p-3">
+                <p className="text-xs text-gray-600 mb-1">定積分の値（実際の面積）</p>
+                <p className="text-2xl font-mono font-bold text-purple-800">{exactIntegral.toFixed(4)}</p>
+                <div className="text-[11px] text-purple-800 mt-1 overflow-x-auto">
+                  <InlineMath math={`\\int_{${getFractionTex(lo)}}^{${getFractionTex(hi)}} f(x)\\,dx`} />
+                </div>
+              </div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500 mb-1">誤差 |Σ − 定積分|</p>
+                <p className="text-xl font-mono font-bold text-gray-800">{error.toFixed(4)}</p>
+                <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+                  n を増やすと誤差が小さくなり、<InlineMath math="n \to \infty" /> で定積分に一致します。
+                </p>
+              </div>
             </div>
-
-            <div className="text-3xl text-purple-700 font-extrabold border-t border-gray-100 pt-4 pb-2">
-              <InlineMath math={`= ${getFractionTex(integralValue)}`} />
-            </div>
-            
           </div>
         </div>
       </div>
 
       <div className="h-full min-h-[280px] w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex items-center justify-center p-4">
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2 text-[11px] font-bold">
+          <span className="bg-white/90 border border-violet-200 text-violet-700 px-2 py-1 rounded-full shadow-sm">短冊（リーマン和）</span>
+          <span className="bg-white/90 border border-purple-200 text-purple-700 px-2 py-1 rounded-full shadow-sm">曲線下の面積</span>
+        </div>
         <svg viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className="w-full h-full max-h-full object-contain">
           <line x1={0} y1={CY} x2={SVG_WIDTH} y2={CY} stroke="#cbd5e1" strokeWidth="2" />
           <line x1={CX} y1={0} x2={CX} y2={SVG_HEIGHT} stroke="#cbd5e1" strokeWidth="2" />
 
-          {/* Area Shade */}
-          <g>{shadeElements}</g>
+          {areaPath && <path d={areaPath} fill="rgba(147, 51, 234, 0.12)" stroke="none" />}
+
+          {rectangles.map((r, i) => {
+            const x = CX + r.x0 * UNIT_X;
+            const w = Math.max(0.5, (r.x1 - r.x0) * UNIT_X);
+            const yTop = CY - r.height * UNIT_Y;
+            const h = CY - yTop;
+            return (
+              <rect
+                key={i}
+                x={x}
+                y={Math.min(yTop, CY)}
+                width={w}
+                height={Math.abs(h)}
+                fill="rgba(139, 92, 246, 0.35)"
+                stroke="#7c3aed"
+                strokeWidth={n > 40 ? 0.5 : 1.2}
+              />
+            );
+          })}
 
           <path d={fPath} fill="none" stroke="#9333ea" strokeWidth="3.5" />
-          
-          {mode === 'double' && (
-            <path d={gPath} fill="none" stroke="#2563eb" strokeWidth="2.5" />
-          )}
 
-          <line x1={CX + a*UNIT_X} y1={0} x2={CX + a*UNIT_X} y2={SVG_HEIGHT} stroke="#ec4899" strokeWidth="1.5" strokeDasharray="4" opacity="0.6"/>
-          <SvgMath x={CX + a*UNIT_X - 25} y={CY + 15} width={50} height={25} math="x = a" color="text-pink-600 bg-white/80 rounded" />
-          
-          <line x1={CX + b*UNIT_X} y1={0} x2={CX + b*UNIT_X} y2={SVG_HEIGHT} stroke="#ec4899" strokeWidth="1.5" strokeDasharray="4" opacity="0.6"/>
-          <SvgMath x={CX + b*UNIT_X - 25} y={CY + 15} width={50} height={25} math="x = b" color="text-pink-600 bg-white/80 rounded" />
+          <line x1={CX + lo * UNIT_X} y1={0} x2={CX + lo * UNIT_X} y2={SVG_HEIGHT} stroke="#ec4899" strokeWidth="1.5" strokeDasharray="4" opacity="0.6" />
+          <SvgMath x={CX + lo * UNIT_X - 25} y={CY + 12} width={50} height={25} math="a" color="text-pink-600 bg-white/80 rounded" />
+          <line x1={CX + hi * UNIT_X} y1={0} x2={CX + hi * UNIT_X} y2={SVG_HEIGHT} stroke="#ec4899" strokeWidth="1.5" strokeDasharray="4" opacity="0.6" />
+          <SvgMath x={CX + hi * UNIT_X - 25} y={CY + 12} width={50} height={25} math="b" color="text-pink-600 bg-white/80 rounded" />
         </svg>
       </div>
     </SplitPane>
@@ -1260,7 +1238,7 @@ const IntegralAreaTab = () => {
 };
 
 // ==========================================
-// 【第5部】定積分のイメージ（微積分学の基本定理）
+// 【第5部】定積分のイメージ（微積分学の基本定理・はさみうち）
 // ==========================================
 const IntegralImageTab = () => {
   const [h, setH] = useState<number>(2.0);
@@ -1274,6 +1252,7 @@ const IntegralImageTab = () => {
   const scaleX = 100;
   const scaleY = 30;
 
+  // f は [0,∞) で増加（p>0）→ はさみうち f(x) ≤ ΔS/h ≤ f(x+h) が成り立つ
   const f = (x: number) => p * x * x + r;
   const S = (x: number) => (p / 3) * Math.pow(x, 3) + r * x;
 
@@ -1295,10 +1274,12 @@ const IntegralImageTab = () => {
   };
 
   const deltaS = S(fixedX + h) - S(fixedX);
-  const averageHeight = h !== 0 ? deltaS / h : f(fixedX);
-  const exactHeight = f(fixedX);
+  const avgHeight = h !== 0 ? deltaS / h : f(fixedX);
+  const lowerH = f(fixedX);
+  const upperH = f(fixedX + h);
   const fTex = formatPoly({ c: p, p: 2 }, { c: r, p: 0 });
   const sTex = formatPoly({ c: p / 3, p: 3 }, { c: r, p: 1 });
+  const gap = upperH - lowerH;
 
   return (
     <SplitPane>
@@ -1314,28 +1295,51 @@ const IntegralImageTab = () => {
             </div>
           </div>
 
-          <SliderRow label="x² の係数 (p)" value={p} min={0.1} max={1.5} step={0.1} onChange={setP} accentColor="accent-indigo-500" textColor="text-indigo-600" />
+          <SliderRow label="x² の係数 (p > 0)" value={p} min={0.1} max={1.5} step={0.1} onChange={setP} accentColor="accent-indigo-500" textColor="text-indigo-600" />
           <SliderRow label="定数項" value={r} min={0} max={3} step={0.1} onChange={setR} accentColor="accent-indigo-500" textColor="text-indigo-600" />
           <SliderRow label="基準の位置 x" value={fixedX} min={0.5} max={4} step={0.1} onChange={setFixedX} accentColor="accent-slate-500" textColor="text-slate-700" />
           <SliderRow label="増分 h" value={h} min={0.001} max={3} step={0.001} onChange={setH} accentColor="accent-rose-500" textColor="text-rose-600" />
 
           <p className="text-xs text-gray-600 leading-relaxed">
-            スライダーで <InlineMath math="h \to 0" /> を再現すると、赤い面積の平均の高さが点線の長方形の高さ <InlineMath math="f(x)" /> に近づきます。これが微積分学の基本定理 <InlineMath math="S'(x) = f(x)" /> のイメージです。
+            区間 <InlineMath math="[x,\,x+h]" /> では、増加関数なので「下からの長方形 ≤ 実際の面積 ΔS ≤ 上からの長方形」が成り立ちます。
+            両辺を h で割ると <InlineMath math="f(x) \leqq \dfrac{\Delta S}{h} \leqq f(x+h)" />。
+            <InlineMath math="h \to 0" /> で左右が <InlineMath math="f(x)" /> に近づき、真ん中もはさみうちで <InlineMath math="f(x)" /> に一致します。
+            つまり面積の変化率（微分）が元の関数の高さになります：<InlineMath math="S'(x) = f(x)" />。
           </p>
 
-          <div className="bg-blue-50 p-5 rounded-xl border border-blue-100 space-y-4">
-            <h3 className="text-sm font-bold text-blue-900">計算値の比較</h3>
-            <div>
-              <p className="text-xs text-gray-600 mb-1">赤い部分の平均の高さ <InlineMath math="\Delta S / h" /></p>
-              <p className="text-2xl font-mono font-bold text-red-600">{averageHeight.toFixed(4)}</p>
+          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
+            <h3 className="text-sm font-bold text-blue-900">はさみうちの不等式</h3>
+            <div className="flex flex-col items-center gap-2 py-2">
+              <div className="flex flex-wrap items-end justify-center gap-2 text-center">
+                <div>
+                  <p className="text-[10px] text-blue-700 font-bold mb-0.5">下から f(x)</p>
+                  <p className="text-xl font-mono font-bold text-blue-600">{lowerH.toFixed(4)}</p>
+                </div>
+                <span className="text-lg font-bold text-gray-400 pb-1">≦</span>
+                <div>
+                  <p className="text-[10px] text-rose-700 font-bold mb-0.5">ΔS / h</p>
+                  <p className="text-xl font-mono font-bold text-rose-600">{avgHeight.toFixed(4)}</p>
+                </div>
+                <span className="text-lg font-bold text-gray-400 pb-1">≦</span>
+                <div>
+                  <p className="text-[10px] text-red-700 font-bold mb-0.5">上から f(x+h)</p>
+                  <p className="text-xl font-mono font-bold text-red-600">{upperH.toFixed(4)}</p>
+                </div>
+              </div>
+              <div className="w-full text-xs text-blue-900 bg-white/80 rounded-lg p-2 border border-blue-100 overflow-x-auto text-center">
+                <InlineMath math={`${lowerH.toFixed(4)} \\leqq ${avgHeight.toFixed(4)} \\leqq ${upperH.toFixed(4)}`} />
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-600 mb-1">点線の長方形の高さ <InlineMath math="f(x)" /></p>
-              <p className="text-2xl font-mono font-bold text-gray-800">{exactHeight.toFixed(4)}</p>
+            <div className="text-xs text-gray-600 space-y-1 border-t border-blue-100 pt-2">
+              <p><InlineMath math={`\\Delta S = S(x+h)-S(x) = ${deltaS.toFixed(4)}`} /></p>
+              <p>左右の差 <InlineMath math={`f(x+h)-f(x) = ${gap.toFixed(4)}`} />（h → 0 で 0 に近づく）</p>
             </div>
-            <div className="text-xs text-blue-800 bg-white/80 rounded-lg p-2 border border-blue-100 overflow-x-auto">
-              <InlineMath math={`\\Delta S = S(x+h)-S(x) = ${deltaS.toFixed(4)}`} />
-            </div>
+          </div>
+
+          <div className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1">
+            <p><span className="inline-block w-3 h-0.5 bg-blue-500 mr-1 align-middle" style={{ borderTop: "2px dashed #3b82f6" }} /> 青点線：下からの評価（高さ f(x)）</p>
+            <p><span className="inline-block w-3 h-2 bg-red-200 mr-1 align-middle rounded-sm" /> 薄赤：実際の面積 ΔS</p>
+            <p><span className="inline-block w-3 h-0.5 bg-red-500 mr-1 align-middle" style={{ borderTop: "2px dashed #ef4444" }} /> 赤点線：上からの評価（高さ f(x+h)）</p>
           </div>
         </div>
       </div>
@@ -1345,26 +1349,45 @@ const IntegralImageTab = () => {
           <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#cbd5e1" strokeWidth="2" />
           <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#cbd5e1" strokeWidth="2" />
 
-          <path d={generateAreaPath(0, fixedX)} fill="#bfdbfe" opacity="0.7" />
-          <path d={generateAreaPath(fixedX, fixedX + h)} fill="#fecaca" opacity="0.8" />
+          {/* 0 から x までの面積（参考） */}
+          <path d={generateAreaPath(0, fixedX)} fill="#e0e7ff" opacity="0.45" />
 
+          {/* 実際の面積 ΔS */}
+          <path d={generateAreaPath(fixedX, fixedX + h)} fill="#fecaca" opacity="0.85" />
+
+          {/* 上からの評価：高さ f(x+h) */}
           <rect
             x={mapX(fixedX)}
-            y={mapY(exactHeight)}
+            y={mapY(upperH)}
             width={h * scaleX}
-            height={exactHeight * scaleY}
+            height={upperH * scaleY}
             fill="none"
             stroke="#ef4444"
-            strokeWidth="3"
-            strokeDasharray="6 6"
+            strokeWidth="2.5"
+            strokeDasharray="7 5"
           />
 
-          <path d={generateCurvePath(0, 6)} fill="none" stroke="#1f2937" strokeWidth="4" />
+          {/* 下からの評価：高さ f(x) */}
+          <rect
+            x={mapX(fixedX)}
+            y={mapY(lowerH)}
+            width={h * scaleX}
+            height={lowerH * scaleY}
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth="2.5"
+            strokeDasharray="7 5"
+          />
 
-          <line x1={padding} y1={mapY(exactHeight)} x2={mapX(fixedX)} y2={mapY(exactHeight)} stroke="#6b7280" strokeWidth="2" strokeDasharray="4 4" />
-          <SvgMath x={padding - 48} y={mapY(exactHeight) - 14} width={50} height={28} math="f(x)" color="text-gray-700" justify="end" />
-          <text x={mapX(fixedX)} y={height - padding + 22} textAnchor="middle" fontSize="16" fontWeight="bold" fill="#334155">x</text>
-          <text x={mapX(fixedX + h)} y={height - padding + 22} textAnchor="middle" fontSize="16" fontWeight="bold" fill="#dc2626">x + h</text>
+          <path d={generateCurvePath(0, 6)} fill="none" stroke="#1f2937" strokeWidth="3.5" />
+
+          <line x1={padding} y1={mapY(lowerH)} x2={mapX(fixedX)} y2={mapY(lowerH)} stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.7" />
+          <line x1={padding} y1={mapY(upperH)} x2={mapX(fixedX + h)} y2={mapY(upperH)} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.7" />
+          <SvgMath x={padding - 52} y={mapY(lowerH) - 14} width={55} height={28} math="f(x)" color="text-blue-600" justify="end" />
+          <SvgMath x={padding - 72} y={mapY(upperH) - 14} width={75} height={28} math="f(x+h)" color="text-red-600" justify="end" />
+
+          <text x={mapX(fixedX)} y={height - padding + 22} textAnchor="middle" fontSize="15" fontWeight="bold" fill="#334155">x</text>
+          <text x={mapX(fixedX + h)} y={height - padding + 22} textAnchor="middle" fontSize="15" fontWeight="bold" fill="#dc2626">x + h</text>
         </svg>
       </div>
     </SplitPane>
@@ -1401,13 +1424,13 @@ const CalculusVisualizer = () => {
             onClick={() => setActiveTab('integral')} 
             className={`px-4 py-2 rounded-md text-sm font-bold whitespace-nowrap transition ${activeTab === 'integral' ? 'bg-white shadow-sm text-purple-700' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            4. 定積分と面積
+            4. 定積分と面積（区分求積）
           </button>
           <button 
             onClick={() => setActiveTab('ftc')} 
             className={`px-4 py-2 rounded-md text-sm font-bold whitespace-nowrap transition ${activeTab === 'ftc' ? 'bg-white shadow-sm text-rose-700' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            5. 定積分のイメージ
+            5. 定積分のイメージ（はさみうち）
           </button>
         </div>
       </div>
