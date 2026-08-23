@@ -24,3 +24,30 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+body.split-dragging {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+body.split-dragging-row {
+  cursor: row-resize !important;
+  user-select: none !important;
+}
+
+.split-left {
+  flex: 0 0 var(--split-h);
+  max-height: var(--split-h);
+  min-height: 8rem;
+}
+
+@media (min-width: 768px) {
+  .split-left {
+    flex: 0 0 var(--split-w);
+    width: var(--split-w);
+    max-width: calc(100% - 16rem);
+    max-height: none;
+    height: 100%;
+    min-height: 0;
+  }
+}
