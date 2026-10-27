@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { InlineMath } from "react-katex";
 import { ProbItem, combinations, toLatexFraction } from "./prob-utils";
+import { SplitPane } from "../components/SplitLayout";
 
 type SimMode = "coins" | "balls" | "dice_sum" | "coin_money" | "lottery";
 
@@ -181,6 +182,7 @@ export default function SimulationTab() {
     return { den, exNum, ex, vx, sx, expMean, expVar };
   }, [simDistribution, simCounts, totalSimTrials]);
 
+
   const modeButtons: { id: SimMode; label: string }[] = [
     { id: "balls", label: "袋から玉を取り出す" },
     { id: "coins", label: "硬貨を投げる" },
@@ -190,73 +192,92 @@ export default function SimulationTab() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
-        <label className="block text-sm font-bold text-slate-700 mb-2">試行・問題の種類</label>
-        <div className="flex flex-wrap gap-2 mb-5">
-          {modeButtons.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setSimMode(m.id)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition border ${
-                simMode === m.id ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-              }`}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
+    <SplitPane>
+      <div className="space-y-4">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-100 space-y-4">
+          <label className="block text-sm font-bold text-slate-700">試行・問題の種類</label>
+          <div className="flex flex-wrap gap-2">
+            {modeButtons.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => setSimMode(m.id)}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition border ${
+                  simMode === m.id ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-700 border-slate-200"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
 
-        {simMode === "balls" && (
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-5 space-y-4">
-            <div className="flex flex-wrap gap-1.5">
-              <button onClick={() => { setWhiteBalls(2); setBlackBalls(3); setDrawBalls(3); setTargetBallColor("white"); }} className="px-2.5 py-1 text-xs font-semibold bg-white border rounded-lg hover:bg-indigo-50">例題1: 白2黒3→3個・白</button>
-              <button onClick={() => { setWhiteBalls(2); setBlackBalls(3); setDrawBalls(4); setTargetBallColor("black"); }} className="px-2.5 py-1 text-xs font-semibold bg-white border rounded-lg hover:bg-indigo-50">練習1: 白2黒3→4個・黒</button>
-              <button onClick={() => { setWhiteBalls(4); setBlackBalls(2); setDrawBalls(2); setTargetBallColor("white"); }} className="px-2.5 py-1 text-xs font-semibold bg-white border rounded-lg hover:bg-indigo-50">練習3: 白4黒2→2個・白</button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-600">白玉: {whiteBalls}</label>
-                <input type="range" min={1} max={6} value={whiteBalls} onChange={(e) => { const w = Number(e.target.value); setWhiteBalls(w); if (drawBalls > w + blackBalls) setDrawBalls(w + blackBalls); }} className="w-full mt-1 accent-indigo-600" />
+          {simMode === "balls" && (
+            <div className="bg-slate-50 p-3 rounded-xl border space-y-3">
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => { setWhiteBalls(2); setBlackBalls(3); setDrawBalls(3); setTargetBallColor("white"); }} className="px-2 py-1 text-xs font-semibold bg-white border rounded-lg">例題1</button>
+                <button onClick={() => { setWhiteBalls(2); setBlackBalls(3); setDrawBalls(4); setTargetBallColor("black"); }} className="px-2 py-1 text-xs font-semibold bg-white border rounded-lg">練習1</button>
+                <button onClick={() => { setWhiteBalls(4); setBlackBalls(2); setDrawBalls(2); setTargetBallColor("white"); }} className="px-2 py-1 text-xs font-semibold bg-white border rounded-lg">練習3</button>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-600">黒玉: {blackBalls}</label>
-                <input type="range" min={1} max={6} value={blackBalls} onChange={(e) => { const b = Number(e.target.value); setBlackBalls(b); if (drawBalls > whiteBalls + b) setDrawBalls(whiteBalls + b); }} className="w-full mt-1 accent-indigo-600" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-600">取り出す個数: {Math.min(drawBalls, whiteBalls + blackBalls)}</label>
-                <input type="range" min={1} max={whiteBalls + blackBalls} value={Math.min(drawBalls, whiteBalls + blackBalls)} onChange={(e) => setDrawBalls(Number(e.target.value))} className="w-full mt-1 accent-indigo-600" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">X とする玉</label>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs font-bold">白玉: {whiteBalls}</label>
+                  <input type="range" min={1} max={6} value={whiteBalls} onChange={(e) => { const w = Number(e.target.value); setWhiteBalls(w); if (drawBalls > w + blackBalls) setDrawBalls(w + blackBalls); }} className="w-full accent-indigo-600" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold">黒玉: {blackBalls}</label>
+                  <input type="range" min={1} max={6} value={blackBalls} onChange={(e) => { const b = Number(e.target.value); setBlackBalls(b); if (drawBalls > whiteBalls + b) setDrawBalls(whiteBalls + b); }} className="w-full accent-indigo-600" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold">取り出す個数: {Math.min(drawBalls, whiteBalls + blackBalls)}</label>
+                  <input type="range" min={1} max={whiteBalls + blackBalls} value={Math.min(drawBalls, whiteBalls + blackBalls)} onChange={(e) => setDrawBalls(Number(e.target.value))} className="w-full accent-indigo-600" />
+                </div>
                 <div className="flex gap-2">
-                  <button onClick={() => setTargetBallColor("white")} className={`flex-1 py-1 text-xs font-bold rounded border ${targetBallColor === "white" ? "bg-indigo-600 text-white" : "bg-white"}`}>白玉</button>
-                  <button onClick={() => setTargetBallColor("black")} className={`flex-1 py-1 text-xs font-bold rounded border ${targetBallColor === "black" ? "bg-indigo-600 text-white" : "bg-white"}`}>黒玉</button>
+                  <button onClick={() => setTargetBallColor("white")} className={`flex-1 py-1 text-xs font-bold rounded border ${targetBallColor === "white" ? "bg-indigo-600 text-white" : "bg-white"}`}>白玉の個数</button>
+                  <button onClick={() => setTargetBallColor("black")} className={`flex-1 py-1 text-xs font-bold rounded border ${targetBallColor === "black" ? "bg-indigo-600 text-white" : "bg-white"}`}>黒玉の個数</button>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {simMode === "coins" && (
-          <div className="bg-slate-50 p-4 rounded-xl border mb-5 flex flex-wrap items-center gap-4">
-            <label className="text-sm font-bold">硬貨の枚数: <span className="text-indigo-600 text-lg">{numCoins}</span></label>
-            <input type="range" min={1} max={6} value={numCoins} onChange={(e) => setNumCoins(Number(e.target.value))} className="w-40 accent-indigo-600" />
-          </div>
-        )}
-
-        <div className="mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <h3 className="text-base font-bold text-slate-900">{simDistribution.title}</h3>
-            <div className="text-xs bg-indigo-50 text-indigo-800 px-3 py-1 rounded-lg border border-indigo-100">
-              <InlineMath math={simDistribution.formulaDesc} />
+          {simMode === "coins" && (
+            <div className="bg-slate-50 p-3 rounded-xl border">
+              <label className="text-sm font-bold">硬貨の枚数: <span className="text-indigo-600">{numCoins}</span></label>
+              <input type="range" min={1} max={6} value={numCoins} onChange={(e) => setNumCoins(Number(e.target.value))} className="w-full mt-1 accent-indigo-600" />
             </div>
+          )}
+
+          <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 space-y-2">
+            <h4 className="text-sm font-bold">実験シミュレーション</h4>
+            <div className="flex flex-wrap gap-2">
+              {[1, 10, 100, 1000].map((n) => (
+                <button key={n} onClick={() => runSimulation(n)} className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg">{n}回</button>
+              ))}
+              <button onClick={() => { setSimCounts({}); setTotalSimTrials(0); setLastOutcomeDesc(""); setLastOutcomeValue(null); }} className="px-3 py-2 bg-white border text-xs font-semibold rounded-lg">リセット</button>
+            </div>
+            {lastOutcomeDesc && <p className="text-xs font-bold text-indigo-950 bg-white px-2 py-1.5 rounded border">{lastOutcomeDesc}</p>}
+            <p className="text-xs">総試行: <span className="font-extrabold text-orange-600">{totalSimTrials}</span> 回</p>
+          </div>
+
+          <div className="bg-white p-3 rounded-xl border space-y-2 text-xs">
+            <div className="font-bold text-indigo-800">期待値・分散・標準偏差</div>
+            <div><InlineMath math={`E(X) = ${toLatexFraction(simStats.exNum, simStats.den)} \\approx ${simStats.ex.toFixed(3)}`} /></div>
+            {totalSimTrials > 0 && <div className="text-orange-700 font-bold">実験平均: {simStats.expMean.toFixed(3)}</div>}
+            <div><InlineMath math={`V(X) \\approx ${simStats.vx.toFixed(3)}`} /></div>
+            <div><InlineMath math={`\\sigma(X) \\approx ${simStats.sx.toFixed(3)}`} /></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-full min-h-[280px] w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-auto p-4 space-y-4">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 mb-1">{simDistribution.title}</h3>
+          <div className="text-xs bg-indigo-50 text-indigo-800 px-3 py-1 rounded-lg border border-indigo-100 inline-block mb-3">
+            <InlineMath math={simDistribution.formulaDesc} />
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-center border-collapse text-sm bg-white rounded-lg overflow-hidden border border-slate-200">
+            <table className="w-full text-center border-collapse text-sm bg-white rounded-lg overflow-hidden border">
               <thead>
                 <tr className="bg-slate-100 border-b">
-                  <th className="py-2 px-3 font-bold border-r w-32">X の値</th>
+                  <th className="py-2 px-3 font-bold border-r w-28">X</th>
                   {simDistribution.items.map((item, idx) => (
                     <td key={`sim-x-${idx}`} className="py-2 px-3 font-bold text-indigo-700 border-r">
                       <div>{item.x}</div>
@@ -268,18 +289,18 @@ export default function SimulationTab() {
               </thead>
               <tbody>
                 <tr className="border-b">
-                  <th className="py-2.5 px-3 font-bold border-r bg-slate-50">理論確率</th>
+                  <th className="py-2 px-3 font-bold border-r bg-slate-50">理論確率</th>
                   {simDistribution.items.map((item, idx) => (
-                    <td key={`sim-p-${idx}`} className="py-2.5 px-3 border-r">
+                    <td key={`sim-p-${idx}`} className="py-2 px-3 border-r">
                       <InlineMath math={toLatexFraction(item.num, item.den, false)} />
                       <div className="text-[11px] text-slate-400">({(item.p * 100).toFixed(1)}%)</div>
                     </td>
                   ))}
-                  <td className="py-2.5 px-3 font-bold bg-slate-100">1</td>
+                  <td className="py-2 px-3 font-bold bg-slate-100">1</td>
                 </tr>
                 {totalSimTrials > 0 && (
                   <tr className="bg-orange-50/70">
-                    <th className="py-2 px-3 font-bold text-orange-800 border-r">実験相対度数<br /><span className="text-[10px] font-normal">({totalSimTrials}回)</span></th>
+                    <th className="py-2 px-3 font-bold text-orange-800 border-r">実験相対度数</th>
                     {simDistribution.items.map((item, idx) => {
                       const cnt = simCounts[item.x] || 0;
                       return (
@@ -297,82 +318,34 @@ export default function SimulationTab() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-indigo-50 to-orange-50 p-4 rounded-xl border border-indigo-100 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h4 className="text-sm font-bold text-slate-900">実験シミュレーション（大数の法則）</h4>
-              <p className="text-xs text-slate-600">試行を繰り返すとオレンジの棒が青い理論値に近づきます。</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {[1, 10, 100, 1000].map((n) => (
-                <button key={n} onClick={() => runSimulation(n)} className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg">
-                  {n}回
-                </button>
-              ))}
-              <button
-                onClick={() => { setSimCounts({}); setTotalSimTrials(0); setLastOutcomeDesc(""); setLastOutcomeValue(null); }}
-                className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg border"
-              >
-                リセット
-              </button>
-            </div>
-          </div>
-          {lastOutcomeDesc && (
-            <div className="mt-3 pt-3 border-t border-indigo-200/60 flex flex-wrap justify-between gap-2 text-xs">
-              <div className="font-bold text-indigo-950 bg-white px-3 py-1.5 rounded-lg border">直前: {lastOutcomeDesc}</div>
-              <div className="font-semibold">総試行: <span className="text-orange-600 font-extrabold">{totalSimTrials}</span> 回</div>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 bg-slate-50 p-4 rounded-xl border">
-            <span className="text-xs font-bold text-slate-700">青:理論 ／ オレンジ:実験</span>
-            <div className="h-56 flex items-end justify-around gap-2 pt-6 pb-2 px-4 bg-white rounded-lg border mt-2">
-              {simDistribution.items.map((item, idx) => {
-                const maxP = Math.max(...simDistribution.items.map((i) => i.p), 0.35);
-                const theoHeightPct = Math.min(100, (item.p / maxP) * 100);
-                const expRel = totalSimTrials > 0 ? (simCounts[item.x] || 0) / totalSimTrials : 0;
-                const expHeightPct = Math.min(100, (expRel / maxP) * 100);
-                const isLast = lastOutcomeValue === item.x;
-                return (
-                  <div key={`bar-${idx}`} className="flex-1 flex flex-col items-center h-full justify-end">
-                    <div className="w-full flex items-end justify-center gap-1 h-40">
-                      <div style={{ height: `${Math.max(3, theoHeightPct)}%` }} className="w-1/2 max-w-[28px] bg-indigo-500 rounded-t relative">
-                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-indigo-700 whitespace-nowrap">{(item.p * 100).toFixed(0)}%</span>
-                      </div>
-                      {totalSimTrials > 0 && (
-                        <div style={{ height: `${Math.max(2, expHeightPct)}%` }} className="w-1/2 max-w-[28px] bg-orange-400 rounded-t relative">
-                          <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-orange-700 whitespace-nowrap">{(expRel * 100).toFixed(0)}%</span>
-                        </div>
-                      )}
+        <div className="bg-slate-50 p-4 rounded-xl border">
+          <span className="text-xs font-bold text-slate-700">青:理論 ／ オレンジ:実験</span>
+          <div className="h-52 flex items-end justify-around gap-2 pt-6 pb-2 px-2 bg-white rounded-lg border mt-2">
+            {simDistribution.items.map((item, idx) => {
+              const maxP = Math.max(...simDistribution.items.map((i) => i.p), 0.35);
+              const theoHeightPct = Math.min(100, (item.p / maxP) * 100);
+              const expRel = totalSimTrials > 0 ? (simCounts[item.x] || 0) / totalSimTrials : 0;
+              const expHeightPct = Math.min(100, (expRel / maxP) * 100);
+              const isLast = lastOutcomeValue === item.x;
+              return (
+                <div key={`bar-${idx}`} className="flex-1 flex flex-col items-center h-full justify-end">
+                  <div className="w-full flex items-end justify-center gap-1 h-36">
+                    <div style={{ height: `${Math.max(3, theoHeightPct)}%` }} className="w-1/2 max-w-[28px] bg-indigo-500 rounded-t relative">
+                      <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-indigo-700 whitespace-nowrap">{(item.p * 100).toFixed(0)}%</span>
                     </div>
-                    <div className={`mt-2 text-xs font-bold px-2 py-0.5 rounded ${isLast ? "bg-orange-500 text-white" : "text-slate-700"}`}>X={item.x}</div>
+                    {totalSimTrials > 0 && (
+                      <div style={{ height: `${Math.max(2, expHeightPct)}%` }} className="w-1/2 max-w-[28px] bg-orange-400 rounded-t relative">
+                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-orange-700 whitespace-nowrap">{(expRel * 100).toFixed(0)}%</span>
+                      </div>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 bg-slate-50 p-4 rounded-xl border space-y-3">
-            <h4 className="text-sm font-bold border-b pb-2">期待値・分散・標準偏差</h4>
-            <div className="bg-white p-3 rounded-lg border text-xs space-y-1">
-              <div className="font-bold text-indigo-800">E(X) = Σ xₖ pₖ</div>
-              <div className="text-sm font-bold"><InlineMath math={`E(X) = ${toLatexFraction(simStats.exNum, simStats.den)} \\approx ${simStats.ex.toFixed(3)}`} /></div>
-              {totalSimTrials > 0 && <div className="text-orange-700 font-bold">実験平均: {simStats.expMean.toFixed(3)}</div>}
-            </div>
-            <div className="bg-white p-3 rounded-lg border text-xs space-y-1">
-              <div className="font-bold text-indigo-800">V(X) = E(X²) − &#123;E(X)&#125;²</div>
-              <div className="text-sm font-bold"><InlineMath math={`V(X) \\approx ${simStats.vx.toFixed(3)}`} /></div>
-              {totalSimTrials > 0 && <div className="text-orange-700 font-bold">実験分散: {simStats.expVar.toFixed(3)}</div>}
-            </div>
-            <div className="bg-white p-3 rounded-lg border text-xs space-y-1">
-              <div className="font-bold text-indigo-800">σ(X) = √V(X)</div>
-              <div className="text-sm font-bold"><InlineMath math={`\\sigma(X) \\approx ${simStats.sx.toFixed(3)}`} /></div>
-            </div>
+                  <div className={`mt-2 text-xs font-bold px-2 py-0.5 rounded ${isLast ? "bg-orange-500 text-white" : "text-slate-700"}`}>X={item.x}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
-    </div>
+    </SplitPane>
   );
 }

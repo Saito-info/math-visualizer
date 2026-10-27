@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { InlineMath, BlockMath } from "react-katex";
 import { ProbItem, toLatexFraction } from "./prob-utils";
+import { SplitPane } from "../components/SplitLayout";
 
 type BaseDistType = "dice1" | "coin2" | "balls_ex1" | "prac6" | "prac8";
 
@@ -128,52 +129,50 @@ export default function TransformTab() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-6 space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                1. もとの確率変数 <InlineMath math="X" /> の分布を選択
-              </label>
-              <select
-                value={baseDistType}
-                onChange={(e) => setBaseDistType(e.target.value as BaseDistType)}
-                className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="dice1">1個のさいころの出る目 X（例2, 例3, 例8）</option>
-                <option value="coin2">2枚の硬貨の表の枚数 X（例1, 例5）</option>
-                <option value="balls_ex1">袋(白2, 黒3)から3個引く白玉の数 X（例題1）</option>
-                <option value="prac6">袋(白4, 黒2)から2個引く白玉の数 X（練習3）</option>
-                <option value="prac8">非対称な確率分布 X（練習8）</option>
-              </select>
-              <p className="text-xs text-slate-500 mt-1.5">{baseDistribution.desc}</p>
-            </div>
-            <div>
-              <span className="block text-xs font-bold text-slate-600 mb-2">📘 教科書プリセット：</span>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { label: "例3・例8: 2X+1", a: 2, b: 1 },
-                  { label: "練習4(1): X+2", a: 1, b: 2 },
-                  { label: "練習4(2): 4X-1", a: 4, b: -1 },
-                  { label: "練習4(3): -3X", a: -3, b: 0 },
-                  { label: "練習9(1): X+4", a: 1, b: 4 },
-                  { label: "練習9(2): -2X", a: -2, b: 0 },
-                  { label: "練習9(3): 3X-2", a: 3, b: -2 },
-                ].map((p) => (
-                  <button
-                    key={p.label}
-                    onClick={() => applyPreset("dice1", p.a, p.b)}
-                    className="px-2.5 py-1.5 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg border border-indigo-200"
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
+    <SplitPane>
+      <div className="space-y-4">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-100 space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              1. もとの確率変数 <InlineMath math="X" /> の分布
+            </label>
+            <select
+              value={baseDistType}
+              onChange={(e) => setBaseDistType(e.target.value as BaseDistType)}
+              className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="dice1">1個のさいころの出る目 X</option>
+              <option value="coin2">2枚の硬貨の表の枚数 X</option>
+              <option value="balls_ex1">袋(白2, 黒3)から3個・白玉の数 X</option>
+              <option value="prac6">袋(白4, 黒2)から2個・白玉の数 X</option>
+              <option value="prac8">非対称な確率分布 X</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1.5">{baseDistribution.desc}</p>
+          </div>
+          <div>
+            <span className="block text-xs font-bold text-slate-600 mb-2">教科書プリセット</span>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: "例3・例8: 2X+1", a: 2, b: 1 },
+                { label: "練習4(1): X+2", a: 1, b: 2 },
+                { label: "練習4(2): 4X-1", a: 4, b: -1 },
+                { label: "練習4(3): -3X", a: -3, b: 0 },
+                { label: "練習9(1): X+4", a: 1, b: 4 },
+                { label: "練習9(2): -2X", a: -2, b: 0 },
+                { label: "練習9(3): 3X-2", a: 3, b: -2 },
+              ].map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => applyPreset("dice1", p.a, p.b)}
+                  className="px-2.5 py-1.5 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg border border-indigo-200"
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="lg:col-span-6 bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="text-sm font-bold text-slate-800">2. 変換式 <InlineMath math="Y = aX + b" /></span>
               <span className="px-3 py-1 bg-indigo-600 text-white font-bold rounded-lg text-sm">
@@ -183,7 +182,6 @@ export default function TransformTab() {
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-semibold">
                 <span className="text-amber-700">かけ算 a = <strong>{paramA}</strong></span>
-                <span className="text-slate-500">幅は |a|={Math.abs(paramA)} 倍、分散は a²={paramA * paramA} 倍</span>
               </div>
               <div className="flex items-center gap-3">
                 <input type="range" min={-3} max={4} step={0.5} value={paramA} onChange={(e) => setParamA(parseFloat(e.target.value))} className="w-full accent-amber-600" />
@@ -193,30 +191,85 @@ export default function TransformTab() {
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-semibold">
                 <span className="text-emerald-700">足し算 b = <strong>{paramB >= 0 ? `+${paramB}` : paramB}</strong></span>
-                <span className="text-slate-500">位置だけズレる（散らばり不変）</span>
               </div>
               <div className="flex items-center gap-3">
                 <input type="range" min={-6} max={8} step={0.5} value={paramB} onChange={(e) => setParamB(parseFloat(e.target.value))} className="w-full accent-emerald-600" />
                 <button onClick={() => setParamB(0)} className="px-2 py-1 text-xs bg-white border border-slate-300 rounded shrink-0">b=0</button>
               </div>
             </div>
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={showStepByStep} onChange={(e) => setShowStepByStep(e.target.checked)} className="rounded text-indigo-600" />
+              途中経過（aX）の数直線も表示
+            </label>
+          </div>
+
+          <div className="space-y-3">
+            <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-3">
+              <div className="text-xs font-bold text-blue-700 mb-1">期待値</div>
+              <div className="text-center bg-white py-1.5 rounded border border-blue-100 text-sm"><InlineMath math="E(aX+b)=aE(X)+b" /></div>
+              <div className="text-xs mt-2 font-medium"><InlineMath math={`E(Y)=${statsTransform.ey.toFixed(2)}`} /></div>
+            </div>
+            <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3">
+              <div className="text-xs font-bold text-amber-800 mb-1">分散</div>
+              <div className="text-center bg-white py-1.5 rounded border border-amber-100 text-sm"><InlineMath math="V(aX+b)=a^2 V(X)" /></div>
+              <div className="text-xs mt-2 font-medium"><InlineMath math={`V(Y)\\approx${statsTransform.vy.toFixed(2)}`} /></div>
+            </div>
+            <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3">
+              <div className="text-xs font-bold text-emerald-800 mb-1">標準偏差</div>
+              <div className="text-center bg-white py-1.5 rounded border border-emerald-100 text-sm"><InlineMath math="\sigma(aX+b)=|a|\sigma(X)" /></div>
+              <div className="text-xs mt-2 font-medium"><InlineMath math={`\\sigma(Y)\\approx${statsTransform.sy.toFixed(3)}`} /></div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowVarianceSquares(!showVarianceSquares)}
+            className="w-full px-3 py-1.5 text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg"
+          >
+            {showVarianceSquares ? "▲ 正方形イメージを閉じる" : "▼ なぜ分散は a² 倍？"}
+          </button>
+          {showVarianceSquares && (
+            <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-3 text-xs text-slate-700 space-y-2">
+              <div className="bg-white p-2 rounded border border-amber-200">
+                <BlockMath math="\{(aX+b)-(am+b)\}^2 = a^2(X-m)^2" />
+              </div>
+            </div>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-center border-collapse text-xs bg-white rounded-lg overflow-hidden border border-slate-200">
+              <thead>
+                <tr className="bg-slate-100 border-b">
+                  <th className="py-1.5 px-2 font-bold text-blue-800 border-r">X</th>
+                  {baseDistribution.items.map((item, idx) => (
+                    <td key={`th-x-${idx}`} className="py-1.5 px-2 font-bold text-blue-700 border-r">{item.x}</td>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="bg-emerald-50/60 border-b">
+                  <th className="py-1.5 px-2 font-bold text-emerald-800 border-r">Y</th>
+                  {baseDistribution.items.map((item, idx) => (
+                    <td key={`td-y-${idx}`} className="py-1.5 px-2 font-bold text-emerald-700 border-r">{paramA * item.x + paramB}</td>
+                  ))}
+                </tr>
+                <tr>
+                  <th className="py-1.5 px-2 font-bold border-r bg-slate-50">P</th>
+                  {baseDistribution.items.map((item, idx) => (
+                    <td key={`td-p-${idx}`} className="py-1.5 px-2 border-r"><InlineMath math={toLatexFraction(item.num, item.den, false)} /></td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">📏 数直線で見る期待値と標準偏差</h2>
-            <p className="text-xs text-slate-600 mt-0.5">青: X ／ オレンジ: aX ／ 緑: aX+b</p>
-          </div>
-          <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-lg">
-            <input type="checkbox" checked={showStepByStep} onChange={(e) => setShowStepByStep(e.target.checked)} className="rounded text-indigo-600" />
-            途中経過（aX）も表示
-          </label>
+      <div className="h-full min-h-[280px] w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex flex-col p-4">
+        <div className="mb-2 shrink-0">
+          <h2 className="text-sm font-bold text-slate-900">数直線で見る期待値と標準偏差</h2>
+          <p className="text-xs text-slate-600">青: X ／ オレンジ: aX ／ 緑: aX+b</p>
         </div>
-
-        <div className="w-full overflow-x-auto bg-slate-50 rounded-xl border border-slate-200 p-3">
+        <div className="flex-1 min-h-0 w-full overflow-x-auto bg-slate-50 rounded-xl border border-slate-200 p-3">
           <svg viewBox={`0 0 800 ${showStepByStep ? 390 : 270}`} className="w-full min-w-[680px] h-auto select-none">
             <defs>
               <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
@@ -397,100 +450,7 @@ export default function TransformTab() {
             </g>
           </svg>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4">
-            <div className="text-xs font-bold text-blue-700 mb-2">期待値（p.54）</div>
-            <div className="my-2 text-center bg-white py-2 rounded-lg border border-blue-100"><InlineMath math="E(aX + b) = aE(X) + b" /></div>
-            <div className="text-xs bg-white/90 p-2.5 rounded-lg border border-blue-200 font-medium">
-              <InlineMath math={`E(X) = ${toLatexFraction(statsTransform.exNum, statsTransform.den)} \\approx ${statsTransform.ex.toFixed(2)}`} />
-              <div className="mt-1 text-blue-900 font-bold">
-                <InlineMath math={`E(Y) = ${statsTransform.ey.toFixed(2)}`} />
-              </div>
-            </div>
-          </div>
-          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4">
-            <div className="text-xs font-bold text-amber-800 mb-2">分散（p.59）</div>
-            <div className="my-2 text-center bg-white py-2 rounded-lg border border-amber-100"><InlineMath math="V(aX + b) = a^2 V(X)" /></div>
-            <div className="text-xs bg-white/90 p-2.5 rounded-lg border border-amber-200 font-medium">
-              <InlineMath math={`V(X) = ${toLatexFraction(statsTransform.vxNum, statsTransform.vxDen)} \\approx ${statsTransform.vx.toFixed(2)}`} />
-              <div className="mt-1 text-amber-900 font-bold"><InlineMath math={`V(Y) \\approx ${statsTransform.vy.toFixed(2)}`} /></div>
-            </div>
-          </div>
-          <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4">
-            <div className="text-xs font-bold text-emerald-800 mb-2">標準偏差（p.59）</div>
-            <div className="my-2 text-center bg-white py-2 rounded-lg border border-emerald-100"><InlineMath math="\sigma(aX + b) = |a| \sigma(X)" /></div>
-            <div className="text-xs bg-white/90 p-2.5 rounded-lg border border-emerald-200 font-medium">
-              <InlineMath math={`\\sigma(X) \\approx ${statsTransform.sx.toFixed(3)}`} />
-              <div className="mt-1 text-emerald-900 font-bold"><InlineMath math={`\\sigma(Y) \\approx ${statsTransform.sy.toFixed(3)}`} /></div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 pt-5 border-t border-slate-200">
-          <button
-            onClick={() => setShowVarianceSquares(!showVarianceSquares)}
-            className="px-3 py-1.5 text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg mb-4"
-          >
-            {showVarianceSquares ? "▲ 正方形イメージを閉じる" : "▼ なぜ分散は a² 倍？"}
-          </button>
-          {showVarianceSquares && (
-            <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 mb-4 text-xs text-slate-700 space-y-2">
-              <p className="font-bold text-sm text-amber-900">分散は平均からの距離を辺とする正方形の面積の平均（p.58）</p>
-              <div className="bg-white p-2 rounded border border-amber-200">
-                <BlockMath math="\{(aX+b)-(am+b)\}^2 = a^2(X-m)^2" />
-              </div>
-              <div className="flex items-center justify-around bg-white p-4 rounded-xl border border-amber-100">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 border-2 border-blue-600 mx-auto flex items-center justify-center text-xs font-bold">V(X)</div>
-                </div>
-                <div className="text-xl font-bold text-amber-600">⇒</div>
-                <div className="text-center">
-                  {(() => {
-                    const scale = Math.min(2.2, Math.max(0.3, Math.abs(paramA)));
-                    const sizePx = Math.round(64 * scale);
-                    return (
-                      <div style={{ width: sizePx, height: sizePx }} className="bg-amber-100 border-2 border-amber-600 mx-auto flex items-center justify-center text-xs font-bold transition-all">
-                        {paramA * paramA}倍
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-center border-collapse text-sm bg-white rounded-lg overflow-hidden border border-slate-200">
-              <thead>
-                <tr className="bg-slate-100 border-b border-slate-200">
-                  <th className="py-2 px-3 font-bold text-blue-800 border-r w-36">もとの値 X</th>
-                  {baseDistribution.items.map((item, idx) => (
-                    <td key={`th-x-${idx}`} className="py-2 px-3 font-bold text-blue-700 border-r">{item.x}</td>
-                  ))}
-                  <th className="py-2 px-3 font-bold bg-slate-200/70">計</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="bg-emerald-50/60 border-b">
-                  <th className="py-2 px-3 font-bold text-emerald-800 border-r">変換後 Y</th>
-                  {baseDistribution.items.map((item, idx) => (
-                    <td key={`td-y-${idx}`} className="py-2 px-3 font-bold text-emerald-700 border-r">{paramA * item.x + paramB}</td>
-                  ))}
-                  <td className="py-2 px-3 text-slate-400 bg-slate-100">―</td>
-                </tr>
-                <tr>
-                  <th className="py-2.5 px-3 font-bold border-r bg-slate-50">確率 P</th>
-                  {baseDistribution.items.map((item, idx) => (
-                    <td key={`td-p-${idx}`} className="py-2.5 px-3 border-r"><InlineMath math={toLatexFraction(item.num, item.den, false)} /></td>
-                  ))}
-                  <td className="py-2.5 px-3 font-bold bg-slate-100">1</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
-    </div>
+    </SplitPane>
   );
 }
