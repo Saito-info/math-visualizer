@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
+import ProbabilityVisualizer from "./math-b/ProbabilityVisualizer";
 
 // ==========================================
 // 共通設定・ヘルパー関数
@@ -2922,39 +2923,34 @@ const ExpLogVisualizer = () => {
 };
 
 // ==========================================
-// メイン画面（統合エントリーポイント）
+// 数学Ⅱ（三角関数・指数対数・微積分）
 // ==========================================
-export default function IntegratedMathApp() {
+const Math2Visualizer = () => {
   const [category, setCategory] = useState<'trig' | 'explog' | 'calculus'>('trig');
-  const [leftWidth, setLeftWidth] = useState(400);
 
   return (
-    <SplitLayoutContext.Provider value={{ leftWidth, setLeftWidth }}>
-    <div className="h-[100dvh] bg-gray-100 text-gray-800 font-sans p-3 md:p-4 flex flex-col min-h-0 overflow-hidden">
-      
-      {/* 画面上部のマスターカテゴリー切り替えトグル */}
+    <div className="h-full flex flex-col min-h-0">
       <div className="w-full shrink-0 mb-3 bg-white p-1.5 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row">
-        <button 
-          onClick={() => setCategory('trig')} 
+        <button
+          onClick={() => setCategory('trig')}
           className={`flex-1 py-2.5 px-4 text-center text-sm font-bold rounded-lg transition ${category === 'trig' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           📐 三角関数
         </button>
-        <button 
-          onClick={() => setCategory('explog')} 
+        <button
+          onClick={() => setCategory('explog')}
           className={`flex-1 py-2.5 px-4 text-center text-sm font-bold rounded-lg transition ${category === 'explog' ? 'bg-emerald-600 text-white shadow' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           📈 指数・対数関数
         </button>
-        <button 
-          onClick={() => setCategory('calculus')} 
+        <button
+          onClick={() => setCategory('calculus')}
           className={`flex-1 py-2.5 px-4 text-center text-sm font-bold rounded-lg transition ${category === 'calculus' ? 'bg-purple-600 text-white shadow' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           📉 微分・積分
         </button>
       </div>
 
-      {/* 状態を維持するために hidden で出し分ける */}
       <div className={category === 'trig' ? 'flex-1 min-h-0 animate-fade-in' : 'hidden'}>
         <TrigVisualizer />
       </div>
@@ -2963,6 +2959,43 @@ export default function IntegratedMathApp() {
       </div>
       <div className={category === 'calculus' ? 'flex-1 min-h-0 animate-fade-in' : 'hidden'}>
         <CalculusVisualizer />
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// メイン画面（統合エントリーポイント）
+// ==========================================
+export default function IntegratedMathApp() {
+  const [course, setCourse] = useState<'math2' | 'mathb'>('math2');
+  const [leftWidth, setLeftWidth] = useState(400);
+
+  return (
+    <SplitLayoutContext.Provider value={{ leftWidth, setLeftWidth }}>
+    <div className="h-[100dvh] bg-gray-100 text-gray-800 font-sans p-3 md:p-4 flex flex-col min-h-0 overflow-hidden">
+
+      {/* 科目切替：数学Ⅱ / 数学B */}
+      <div className="w-full shrink-0 mb-3 bg-white p-1.5 rounded-xl shadow-sm border border-gray-200 flex">
+        <button
+          onClick={() => setCourse('math2')}
+          className={`flex-1 py-2.5 px-4 text-center text-sm font-bold rounded-lg transition ${course === 'math2' ? 'bg-slate-800 text-white shadow' : 'text-gray-500 hover:bg-gray-50'}`}
+        >
+          数学Ⅱ
+        </button>
+        <button
+          onClick={() => setCourse('mathb')}
+          className={`flex-1 py-2.5 px-4 text-center text-sm font-bold rounded-lg transition ${course === 'mathb' ? 'bg-indigo-600 text-white shadow' : 'text-gray-500 hover:bg-gray-50'}`}
+        >
+          数学B（確率分布）
+        </button>
+      </div>
+
+      <div className={course === 'math2' ? 'flex-1 min-h-0 animate-fade-in' : 'hidden'}>
+        <Math2Visualizer />
+      </div>
+      <div className={course === 'mathb' ? 'flex-1 min-h-0 animate-fade-in' : 'hidden'}>
+        <ProbabilityVisualizer />
       </div>
 
     </div>
